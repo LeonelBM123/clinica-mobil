@@ -45,7 +45,13 @@ class _LoginState extends State<Login> {
                   final password = passwordController.text.trim();
                   final result = await autentificacion.login(email, password);
                   if (result?['rol']=='Administrador') {
-                    Navigator.pushNamed(context, '/detalle');
+                    Navigator.pushNamed(context, '/AdminScreen');
+                  }
+                  if (result?['rol']=='Medico') {
+                    Navigator.pushNamed(context, '/MedicoScreen');
+                  }
+                  if (result?['rol']=='Paciente') {
+                    Navigator.pushNamed(context, '/PacienteScreen');
                   }
                 }, child: Text('Ingresar')),
               ],
