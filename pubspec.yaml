@@ -17,6 +17,10 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
 version: 1.0.0+1
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/icon.png"
 
 environment:
   sdk: ^3.7.2
@@ -36,6 +40,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   http: ^1.5.0
   flutter_secure_storage: ^9.2.4
+  font_awesome_flutter: ^10.10.0
 
 dev_dependencies:
   flutter_test:

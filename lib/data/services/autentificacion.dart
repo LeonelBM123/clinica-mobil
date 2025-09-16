@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 final storage = FlutterSecureStorage();
 
 Future<Map<String, dynamic>?> login(String username, String password) async {
+  // final url = Uri.parse("http://192.168.0.127:8000/api/usuarios/login/");
   final url = Uri.parse("http://192.168.1.111:8000/api/usuarios/login/");
 
   try {
@@ -20,6 +21,10 @@ Future<Map<String, dynamic>?> login(String username, String password) async {
       // Guardamos el token en secure storage
       await storage.write(key: "token", value: data["token"]);
       await storage.write(key: "rol", value: data["rol"]);
+      await storage.write(
+        key: "usuario_id",
+        value: data["usuario_id"].toString(),
+      );
       await storage.write(
         key: "usuario_id",
         value: data["usuario_id"].toString(),
