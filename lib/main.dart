@@ -6,9 +6,10 @@ import 'package:flutter/material.dart';
 
 void main() {
   runApp(MaterialApp(
+
     debugShowCheckedModeBanner: false,
     title: 'Clinica Visionex',
-    theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue)),
+    theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(148, 33, 243, 233))),
     initialRoute: '/',
     routes: {
       '/': (context) => Login(),

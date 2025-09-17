@@ -21,6 +21,10 @@ class _LoginState extends State<Login> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                Image.asset('lib/assets/images/logo.png',
+                  width: 150,
+                  height: 150,),
+                SizedBox( height: 15),
                 Text('Clinica Visionex'),
                 SizedBox( height: 15),
 
@@ -40,6 +44,7 @@ class _LoginState extends State<Login> {
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12),),
                   ),
                 ),
+                SizedBox( height: 15),
                 TextButton(onPressed: () async {
                   final email = emailController.text.trim();
                   final password = passwordController.text.trim();
@@ -53,7 +58,11 @@ class _LoginState extends State<Login> {
                   if (result?['rol']=='Paciente') {
                     Navigator.pushNamed(context, '/PacienteScreen');
                   }
-                }, child: Text('Ingresar')),
+                }, child: Text('Ingresar',style: TextStyle(color: Colors.white),),
+                
+                  style: TextButton.styleFrom(backgroundColor: Color.fromARGB(255, 23, 99, 95)),
+                ),
+                TextButton(onPressed: ()=>{}, child: Text('Registrate')),
               ],
             ),
           ),

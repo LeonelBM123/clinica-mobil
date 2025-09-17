@@ -15,7 +15,7 @@ class AdminScreen extends StatelessWidget {
           padding: EdgeInsets.zero,
           children: [
             const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.blue),
+              decoration: BoxDecoration(color: Color.fromARGB(255, 16, 110, 106)),
               child: Text(
                 'Menú Admin',
                 style: TextStyle(color: Colors.white, fontSize: 24),

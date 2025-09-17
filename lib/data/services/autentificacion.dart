@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../config/app.config.dart' as api;
 
 final storage = FlutterSecureStorage();
 
 Future<Map<String, dynamic>?> login(String username, String password) async {
-  final url = Uri.parse("http://192.168.0.127:8000/api/usuarios/login/");
+  final url = Uri.parse("${api.AppConfig.apiUrl}/api/usuarios/login/");
 
   try {
     final response = await http.post(

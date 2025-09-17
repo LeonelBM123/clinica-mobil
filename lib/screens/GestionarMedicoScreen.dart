@@ -64,7 +64,7 @@ class _GestionarMedicoScreenState extends State<GestionarMedicoScreen> {
                   leading: FaIcon(
                     FontAwesomeIcons.userDoctor,
                     size: 40,
-                    color: Colors.blue, // Opcional: color médico
+                    color: const Color.fromARGB(255, 16, 110, 106), // Opcional: color médico
                   ),
                   title: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -90,7 +90,7 @@ class _GestionarMedicoScreenState extends State<GestionarMedicoScreen> {
                       Column(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.blue),
+                            icon: const Icon(Icons.edit, color: const Color.fromARGB(255, 16, 110, 106)),
                             onPressed: () async {
                               await Navigator.push(
                                 context,
