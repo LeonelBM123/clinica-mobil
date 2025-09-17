@@ -25,6 +25,10 @@ Future<Map<String, dynamic>?> login(String username, String password) async {
         key: "usuario_id",
         value: data["usuario_id"].toString(),
       );
+      await storage.write(
+        key: "usuario_id",
+        value: data["usuario_id"].toString(),
+      );
 
       print("✅ ${data['message']}");
       return data; // Devuelve el JSON completo si quieres usarlo en la UI
