@@ -1,16 +1,16 @@
-import 'package:clinica_visionex/screens/patologias/GestionarPatologiasScreen.dart';
+import 'package:clinica_visionex/widgets/crud_patologias/GestionarPatologiasScreen.dart';
 import 'package:flutter/material.dart';
-import './GestionarMedicoScreen.dart';
+import '../widgets/crud_medicos/GestionarMedicoScreen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:clinica_visionex/screens/Login.dart'; // 👈 tu pantalla de login
 
 class AdminScreen extends StatelessWidget {
-  const AdminScreen({super.key});
-
+  final String? correo;
+  const AdminScreen({super.key, this.correo});
+  
   @override
   Widget build(BuildContext context) {
     final storage = const FlutterSecureStorage();
-
     Future<void> cerrarSesion() async {
       // Eliminar datos guardados en el login
       await storage.deleteAll();
@@ -28,11 +28,18 @@ class AdminScreen extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Color.fromARGB(255, 16, 110, 106)),
-              child: Text(
-                'Menú Admin',
-                style: TextStyle(color: Colors.white, fontSize: 24),
+            UserAccountsDrawerHeader(
+              decoration: const BoxDecoration(
+                color: Color.fromARGB(255, 16, 110, 106), // Color principal
+              ),
+              accountName: const Text(
+                "Administrador",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              accountEmail: Text(correo ?? "Sin correo"),
+              currentAccountPicture: const CircleAvatar(
+                backgroundColor: Colors.white,
+                child: Icon(Icons.person, size: 40, color: Colors.teal),
               ),
             ),
             ExpansionTile(
@@ -50,6 +57,7 @@ class AdminScreen extends StatelessWidget {
                   },
                 ),
               ],
+              
             ),
             ExpansionTile(
               title: const Text('Historial Clínico y Diagnósticos'),
@@ -60,7 +68,8 @@ class AdminScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const GestionarPatologiaScreen(),
+                        builder:
+                            (context) => const GestionarPatologiaScreen(),
                       ),
                     );
                   },
@@ -68,7 +77,7 @@ class AdminScreen extends StatelessWidget {
               ],
             ),
             const Divider(),
-
+    
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text('Cerrar Sesión'),

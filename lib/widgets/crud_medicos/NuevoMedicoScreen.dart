@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../data/services/MedicoService.dart';
+import '../../data/services/MedicoService.dart';
 
 class NuevoMedicoScreen extends StatefulWidget {
   const NuevoMedicoScreen({super.key});

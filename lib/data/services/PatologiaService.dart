@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/patologia.dart';
-
+import '../../config/app.config.dart' as api;
 class PatologiaService {
-  static const String baseUrl = "http://192.168.1.111:8000/api/patologias/";
+  static const String baseUrl = "${api.AppConfig.apiUrl}/api/patologias/";
 
   static Future<List<Patologia>> getPatologias() async {
     final response = await http.get(Uri.parse(baseUrl));

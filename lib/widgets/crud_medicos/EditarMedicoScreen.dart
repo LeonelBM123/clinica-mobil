@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../data/services/MedicoService.dart';
-import '../data/models/medico.dart';
+import '../../data/services/MedicoService.dart';
+import '../../data/models/medico.dart';
 
 class EditarMedicoScreen extends StatefulWidget {
   final Medico medico;
