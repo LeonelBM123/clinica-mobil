@@ -3,8 +3,9 @@ import 'package:http/http.dart' as http;
 import '../models/medico.dart';
 
 class MedicoService {
-  static const String baseUrl = "http://192.168.1.111:8000/api/medicos/";
-
+ 
+  //static const String baseUrl = "http://192.168.1.111:8000/api/medicos/";
+  static const String baseUrl = "http://192.168.0.17:7000/api/medicos/";
   static Future<List<Medico>> getMedicos() async {
     final response = await http.get(Uri.parse(baseUrl));
     if (response.statusCode == 200) {

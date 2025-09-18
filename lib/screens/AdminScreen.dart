@@ -1,3 +1,4 @@
+import 'package:clinica_visionex/screens/pacientes/GestionarPacientesScreen.dart';
 import 'package:clinica_visionex/screens/patologias/GestionarPatologiasScreen.dart';
 import 'package:flutter/material.dart';
 import './GestionarMedicoScreen.dart';
@@ -45,6 +46,17 @@ class AdminScreen extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (context) => const GestionarMedicoScreen(),
+                      ),
+                    );
+                  },
+                ),
+                ListTile(
+                  title: const Text('Gestionar Pacientes'),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const GestionarPacientesScreen(),
                       ),
                     );
                   },

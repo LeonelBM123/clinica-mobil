@@ -5,8 +5,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 final storage = FlutterSecureStorage();
 
 Future<Map<String, dynamic>?> login(String username, String password) async {
-  // final url = Uri.parse("http://192.168.0.127:8000/api/usuarios/login/");
-  final url = Uri.parse("http://127.0.0.1:7000/api/usuarios/login/");
+     
+     final url = Uri.parse("http://192.168.0.17:7000/api/usuarios/login/");
+   //final url = Uri.parse("http://127.0.0.1:7000/api/usuarios/login/");
 
   try {
     final response = await http.post(
