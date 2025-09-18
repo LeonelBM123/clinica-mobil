@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../../config/app.config.dart' as api;
 import '../models/paciente.dart';
 
 class PacienteService {
   //  usa tu IP local en vez de 127.0.0.1
-  static const String baseUrl = "http://192.168.0.17:7000/api";
+  static const String baseUrl = "${api.AppConfig.apiUrl}/api";
 
   /// Obtener lista de pacientes
   static Future<List<Paciente>> getPacientes() async {
