@@ -8,6 +8,9 @@ import 'package:flutter/material.dart';
 import '../widgets/crud_medicos/GestionarMedicoScreen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:clinica_visionex/screens/Login.dart'; // 👈 tu pantalla de login
+import 'package:google_fonts/google_fonts.dart';
+import '../widgets/common/custom_drawer.dart';
+import '../widgets/common/drawer_menu_item.dart';
 
 class AdminScreen extends StatelessWidget {
   final String? correo;
@@ -16,10 +19,10 @@ class AdminScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final storage = const FlutterSecureStorage();
+    
     Future<void> cerrarSesion() async {
       // Eliminar datos guardados en el login
       await storage.deleteAll();
-
       // Redirigir al login
       Navigator.pushReplacement(
         context,
@@ -27,84 +30,153 @@ class AdminScreen extends StatelessWidget {
       );
     }
 
+    // Configurar elementos del menú para administrador
+    final List<DrawerMenuItem> adminMenuItems = [
+      DrawerMenuItem(
+        title: 'Gestión de Usuarios',
+        icon: Icons.people_outline,
+        subItems: [
+          DrawerSubItem(
+            title: 'Gestionar Médicos',
+            icon: Icons.medical_information_outlined,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const GestionarMedicoScreen(),
+                ),
+              );
+            },
+          ),
+          DrawerSubItem(
+            title: 'Gestionar Pacientes',
+            icon: Icons.people_alt_outlined,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const GestionarPacientesScreen(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      DrawerMenuItem(
+        title: 'Historial Clínico',
+        icon: Icons.assignment_outlined,
+        subItems: [
+          DrawerSubItem(
+            title: 'Gestionar Patologías',
+            icon: Icons.medical_services_outlined,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const GestionarPatologiaScreen(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    ];
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Panel de Administrador')),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            UserAccountsDrawerHeader(
-              decoration: const BoxDecoration(
-                color: Color.fromARGB(255, 16, 110, 106), // Color principal
-              ),
-              accountName: const Text(
-                "Administrador",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              ),
-              accountEmail: Text(correo ?? "Sin correo"),
-              currentAccountPicture: const CircleAvatar(
-                backgroundColor: Colors.white,
-                child: Icon(Icons.person, size: 40, color: Colors.teal),
-              ),
-            ),
-            ExpansionTile(
-              title: const Text('Gestionar Usuarios'),
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        title: Text(
+          'Panel de Administrador',
+          style: GoogleFonts.roboto(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: Color(0xFF17635F),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+      ),
+      drawer: CustomDrawer(
+        userRole: 'Administrador',
+        userEmail: correo,
+        menuItems: adminMenuItems,
+        onLogout: cerrarSesion,
+        userIcon: Icons.admin_panel_settings,
+      ),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.white,
+              Colors.grey[100]!,
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                ListTile(
-                  title: const Text('Gestionar Médicos'),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const GestionarMedicoScreen(),
+                Container(
+                  padding: EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
                       ),
-                    );
-                  },
-                ),
-                ListTile(
-                  title: const Text('Gestionar Pacientes'),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const GestionarPacientesScreen(),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Color(0xFF17635F).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                        child: Icon(
+                          Icons.dashboard,
+                          size: 48,
+                          color: Color(0xFF17635F),
+                        ),
                       ),
-                    );
-                  },
+                      SizedBox(height: 20),
+                      Text(
+                        'Bienvenido al Panel de Administrador',
+                        style: GoogleFonts.roboto(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF17635F),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 12),
+                      Text(
+                        'Utiliza el menú lateral para navegar entre las diferentes secciones de administración.',
+                        style: GoogleFonts.roboto(
+                          fontSize: 16,
+                          color: Colors.grey[600],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
                 ),
               ],
-              
             ),
-            ExpansionTile(
-              title: const Text('Historial Clínico y Diagnósticos'),
-              children: [
-                ListTile(
-                  title: const Text('Gestionar Patologias'),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => const GestionarPatologiaScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-            const Divider(),
-    
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text('Cerrar Sesión'),
-              onTap: () async {
-                await cerrarSesion();
-              },
-            ),
-          ],
+          ),
         ),
       ),
-      body: const Center(child: Text('Bienvenido al Panel de Administrador')),
     );
   }
 }
