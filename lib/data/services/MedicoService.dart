@@ -1,16 +1,23 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/medico.dart';
+import '../models/models.dart';
 import '../../config/app.config.dart' as api;
+
 class MedicoService {
-  static const String baseUrl = "${api.AppConfig.apiUrl}/api/medicos/";
+  static const String baseUrl = "${api.AppConfig.apiUrl}/api/doctores/medicos/";
 
- 
-//   //static const String baseUrl = "http://192.168.1.111:8000/api/medicos/";
-//   static const String baseUrl = "http://192.168.0.17:7000/api/medicos/";
+  // Método de instancia para obtener todos los médicos
+  Future<List<Medico>> getAllMedicos() async {
+    return getMedicos();
+  }
 
+  // Métodos estáticos existentes
   static Future<List<Medico>> getMedicos() async {
-    final response = await http.get(Uri.parse(baseUrl));
+    final response = await http.get(
+      Uri.parse(baseUrl),
+      headers: {"Content-Type": "application/json"},
+    );
+    
     if (response.statusCode == 200) {
       final List<dynamic> jsonData = jsonDecode(response.body);
       return jsonData.map((e) => Medico.fromJson(e)).toList();
@@ -46,7 +53,10 @@ class MedicoService {
   }
 
   static Future<void> deleteMedico(int id) async {
-    final response = await http.delete(Uri.parse("$baseUrl$id/"));
+    final response = await http.delete(
+      Uri.parse("$baseUrl$id/"),
+      headers: {"Content-Type": "application/json"},
+    );
     if (response.statusCode != 204 && response.statusCode != 200) {
       throw Exception('Error al eliminar médico: ${response.statusCode}');
     }

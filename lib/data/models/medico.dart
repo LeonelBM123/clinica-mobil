@@ -1,41 +1,74 @@
+import 'usuario.dart';
+import 'especialidad.dart';
+
 class Medico {
-  final int id;
-  final String nombre;
+  final Usuario medico; // Usuario base
   final String numeroColegiado;
-  final List<String> especialidades; // nombres para mostrar
-  final List<int> especialidadesIds;  // IDs reales para enviar al backend
-  final String correo;
-  final String sexo;
-  final String fechaNacimiento;
-  final String telefono;
-  final String direccion;
-  final String rol;
+  final List<Especialidad> especialidades;
 
   Medico({
-    required this.id,
-    required this.nombre,
+    required this.medico,
     required this.numeroColegiado,
     required this.especialidades,
-    required this.especialidadesIds,
-    required this.correo,
-    required this.sexo,
-    required this.fechaNacimiento,
-    required this.telefono,
-    required this.direccion,
-    required this.rol,
   });
 
-  factory Medico.fromJson(Map<String, dynamic> json) => Medico(
-        id: json['info_medico']['id'],
-        nombre: json['info_medico']['nombre'],
-        numeroColegiado: json['numero_colegiado'],
-        especialidades: List<String>.from(json['especialidades_nombres']),
-        especialidadesIds: List<int>.from(json['especialidades']), // IDs reales
-        correo: json['info_medico']['correo'],
-        sexo: json['info_medico']['sexo'],
-        fechaNacimiento: json['info_medico']['fecha_nacimiento'],
-        telefono: json['info_medico']['telefono'],
-        direccion: json['info_medico']['direccion'],
-        rol: json['info_medico']['rol'],
-      );
+  // Propiedades de conveniencia para acceder a datos del usuario
+  int get id => medico.id;
+  String get nombre => medico.nombre;
+  String get correo => medico.correo;
+  String get sexo => medico.sexo;
+  DateTime get fechaNacimiento => medico.fechaNacimiento;
+  String? get telefono => medico.telefono;
+  String? get direccion => medico.direccion;
+  bool get estado => medico.estado;
+  String? get rol => medico.rol;
+
+  factory Medico.fromJson(Map<String, dynamic> json) {
+    final ids = List<int>.from(json['especialidades']);
+    final nombres = List<String>.from(json['especialidades_nombres']);
+    final especialidades = <Especialidad>[];
+    for (var i = 0; i < ids.length && i < nombres.length; i++) {
+      especialidades.add(Especialidad(id: ids[i], nombre: nombres[i]));
+    }
+    return Medico(
+      medico: Usuario.fromJson(json['info_medico']),
+      numeroColegiado: json['numero_colegiado'],
+      especialidades: especialidades,
+    );
+    
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'medico': medico.toJson(),
+      'numero_colegiado': numeroColegiado,
+      'especialidades': especialidades.map((e) => e.toJson()).toList(),
+    };
+  }
+
+  // Para crear un médico con información completa para formularios
+  Map<String, dynamic> toCreateJson() {
+    return {
+      'numero_colegiado': numeroColegiado,
+      'especialidades': especialidades.map((e) => e.id).toList(),
+      // Datos del usuario
+      'nombre': medico.nombre,
+      'correo': medico.correo,
+      'sexo': medico.sexo,
+      'fecha_nacimiento':
+          medico.fechaNacimiento.toIso8601String().split('T')[0],
+      'telefono': medico.telefono,
+      'direccion': medico.direccion,
+    };
+  }
+
+  String get nombreCompleto => '$nombre';
+
+  String get especialidadesTexto =>
+      especialidades.map((e) => e.nombre).join(', ');
+
+  List<int> get especialidadesIds => especialidades.map((e) => e.id).toList();
+
+  @override
+  String toString() => '$nombreCompleto - $numeroColegiado';
 }

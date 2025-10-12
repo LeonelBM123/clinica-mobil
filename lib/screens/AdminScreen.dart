@@ -1,13 +1,10 @@
 
-import 'package:clinica_visionex/widgets/crud_patologias/GestionarPatologiasScreen.dart';
-// =======
 import 'package:clinica_visionex/screens/pacientes/GestionarPacientesScreen.dart';
-// import 'package:clinica_visionex/screens/patologias/GestionarPatologiasScreen.dart';
-// >>>>>>> edae325167c3f23792b20ba13293602dbe688bfa
+import 'package:clinica_visionex/screens/medicos/gestionar_medicos_screen.dart';
+import 'package:clinica_visionex/screens/patologias/gestionar_patologias_screen.dart';
 import 'package:flutter/material.dart';
-import '../widgets/crud_medicos/GestionarMedicoScreen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:clinica_visionex/screens/Login.dart'; // 👈 tu pantalla de login
+import 'package:clinica_visionex/screens/Login.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/common/custom_drawer.dart';
 import '../widgets/common/drawer_menu_item.dart';
@@ -43,7 +40,7 @@ class AdminScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const GestionarMedicoScreen(),
+                  builder: (context) => const GestionarMedicosScreen(),
                 ),
               );
             },
@@ -73,7 +70,7 @@ class AdminScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const GestionarPatologiaScreen(),
+                  builder: (context) => const GestionarPatologiasScreen(),
                 ),
               );
             },

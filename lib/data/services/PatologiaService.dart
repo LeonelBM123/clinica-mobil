@@ -1,11 +1,17 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/patologia.dart';
+import '../models/models.dart';
 import '../../config/app.config.dart' as api;
+
 class PatologiaService {
+  static const String baseUrl = "${api.AppConfig.apiUrl}/api/citas_pagos/patologias/";
 
-  static const String baseUrl = "${api.AppConfig.apiUrl}/api/patologias/";
+  // Método de instancia para obtener todas las patologías
+  Future<List<Patologia>> getAllPatologias() async {
+    return getPatologias();
+  }
 
+  // Métodos estáticos existentes
   static Future<List<Patologia>> getPatologias() async {
     final response = await http.get(Uri.parse(baseUrl));
     if (response.statusCode == 200) {
