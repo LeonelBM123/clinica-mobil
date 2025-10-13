@@ -1,9 +1,7 @@
-import 'package:clinica_visionex/screens/AdminScreen.dart';
+//import 'package:clinica_visionex/screens/AdminScreen.dart';
 import 'package:clinica_visionex/screens/Login.dart';
-import 'package:clinica_visionex/screens/MedicoScreen.dart';
-import 'package:clinica_visionex/screens/PacienteScreen.dart';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
   runApp(
@@ -16,9 +14,8 @@ void main() {
       initialRoute: '/',
       routes: {
         '/': (context) => Login(),
-        '/AdminScreen': (context) => AdminScreen(),
-        '/MedicoScreen': (context) => MedicoScreen(),
-        '/PacienteScreen': (context) => PacienteScreen(),
+        // PacienteScreen ya no se define aquí porque requiere parámetros
+        // Se navega directamente desde Login usando Navigator.pushReplacement
       },
     ),
   );

@@ -5,6 +5,8 @@ export 'paciente.dart';
 export 'patologia.dart';
 export 'especialidad.dart';
 export 'horario.dart';
+export 'cita_medica.dart';
+
 
 // Modelos adicionales que pueden necesitarse
 // export 'cita.dart';

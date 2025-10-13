@@ -61,18 +61,6 @@ class _EditarMedicoScreenState extends State<EditarMedicoScreen> {
       }
     } catch (e) {
       if (mounted) {
-        /*setState(() {
-          _isLoading = false;
-          // En caso de error, usar especialidades por defecto
-          _especialidadesDisponibles = [
-            Especialidad(id: 1, nombre: 'Oftalmología'),
-            Especialidad(id: 2, nombre: 'Neurología'),
-            Especialidad(id: 3, nombre: 'Cardiología'),
-            Especialidad(id: 4, nombre: 'Pediatría'),
-            Especialidad(id: 5, nombre: 'Medicina General'),
-          ];
-        });
-        */
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error al cargar especialidades: $e'),

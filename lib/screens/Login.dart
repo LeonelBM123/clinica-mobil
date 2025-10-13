@@ -1,12 +1,16 @@
 import 'package:clinica_visionex/data/services/autentificacion.dart'
     as autentificacion;
-import 'package:clinica_visionex/screens/AdminScreen.dart';
+import 'package:clinica_visionex/screens/PacienteScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:convert';
 import '../config/app_colors.dart';
 import '../config/app_text_styles.dart';
 import '../widgets/common/app_animations.dart';
+
+final storage = FlutterSecureStorage();
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -20,7 +24,6 @@ class _LoginState extends State<Login> {
   final TextEditingController passwordController = TextEditingController();
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     
     return Scaffold(
@@ -189,21 +192,98 @@ class _LoginState extends State<Login> {
                             return;
                           }
                           
-                          final result = await autentificacion.login(email, password);
-                          if (result?['rol'] == 'Administrador') {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AdminScreen(correo: email),
-                              ),
-                            );
-                          } else if (result?['rol'] == 'Medico') {
-                            Navigator.pushNamed(context, '/MedicoScreen');
-                          } else if (result?['rol'] == 'Paciente') {
-                            Navigator.pushNamed(context, '/PacienteScreen');
-                          } else {
+                          // Mostrar indicador de carga
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (BuildContext context) {
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF17635F)),
+                                ),
+                              );
+                            },
+                          );
+                          
+                          try {
+                            final result = await autentificacion.login(email, password);
+                            
+                            // Cerrar indicador de carga
+                            Navigator.of(context).pop();
+                            
+                            if (result != null) {
+                              // Debug: Imprimir todos los datos recibidos
+                              print("🔍 Datos recibidos del login: $result");
+                              print("🔍 Rol recibido: '${result['rol']}'");
+                              print("🔍 Puede acceder: ${result['puede_acceder']}");
+                              
+                              // Verificar que sea paciente (normalizar el texto y considerar variaciones)
+                              final rol = result['rol']?.toString().toLowerCase().trim();
+                              print("🔍 Rol normalizado: '$rol'");
+                              
+                              // Considerar diferentes variaciones del rol paciente
+                              bool esPaciente = rol == 'paciente' || 
+                                              rol == 'patient' || 
+                                              rol == 'pacientes' ||
+                                              rol == 'Paciente';
+                              
+                              if (esPaciente) {
+                                // Verificar que tenga acceso (puede_acceder = true)
+                                if (result['puede_acceder'] == true) {
+                                  // Guardar datos del usuario
+                                  await storage.write(key: "user_data", value: jsonEncode({
+                                    'usuario_id': result['usuario_id'],
+                                    'correo': email,
+                                    'rol': result['rol'],
+                                    'grupo_id': result['grupo_id'],
+                                    'grupo_nombre': result['grupo_nombre'],
+                                    'puede_acceder': result['puede_acceder'],
+                                  }));
+                                  
+                                  // Redirigir a pantalla de paciente
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => PacienteScreen(
+                                        usuarioId: result['usuario_id'],
+                                        grupoId: result['grupo_id'],
+                                        grupoNombre: result['grupo_nombre'],
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Tu grupo no tiene acceso al sistema. Contacta al administrador.'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              } else {
+                                // Mostrar el rol que se recibió para debugging
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Esta aplicación es exclusiva para pacientes. Rol recibido: "${result['rol']}"'),
+                                    backgroundColor: Colors.orange,
+                                  ),
+                                );
+                              }
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Credenciales incorrectas'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            // Cerrar indicador de carga si hay error
+                            Navigator.of(context).pop();
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Credenciales incorrectas')),
+                              SnackBar(
+                                content: Text('Error de conexión: ${e.toString()}'),
+                                backgroundColor: Colors.red,
+                              ),
                             );
                           }
                         },
