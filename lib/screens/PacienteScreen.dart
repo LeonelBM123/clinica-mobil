@@ -34,6 +34,8 @@ class _PacienteScreenState extends State<PacienteScreen> {
     _cargarMedicos();
   }
 
+
+
   Future<void> _cargarMedicos() async {
     try {
       setState(() {
@@ -41,7 +43,7 @@ class _PacienteScreenState extends State<PacienteScreen> {
         errorMessage = null;
       });
 
-      final medicosData = await MedicoService.getMedicos();
+      final medicosData = await MedicoService.getMedicos(await storage.read(key: "token") ?? "");
       setState(() {
         medicos = medicosData;
         isLoading = false;

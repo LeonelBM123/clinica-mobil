@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../data/services/CitaService.dart';
 import '../data/services/MedicoService.dart';
 import '../data/models/models.dart';
+import 'citas/crear_cita_screen.dart';
 
 class GestionarCitasScreen extends StatefulWidget {
   final int pacienteId;
@@ -25,6 +27,7 @@ class _GestionarCitasScreenState extends State<GestionarCitasScreen> {
   List<Medico> medicos = [];
   bool isLoading = true;
   String? errorMessage;
+  final storage = const FlutterSecureStorage();
 
   @override
   void initState() {
@@ -40,7 +43,7 @@ class _GestionarCitasScreenState extends State<GestionarCitasScreen> {
       });
 
       final citasData = await CitaService.getCitasPaciente(widget.pacienteId);
-      final medicosData = await MedicoService.getMedicos();
+      final medicosData = await MedicoService.getMedicos(await storage.read(key: "token") ?? "");
 
       setState(() {
         citas = citasData;
@@ -49,7 +52,9 @@ class _GestionarCitasScreenState extends State<GestionarCitasScreen> {
       });
     } catch (e) {
       setState(() {
-        errorMessage = 'Error al cargar datos: ${e.toString()}';
+        if (e == 404) {
+          errorMessage = 'Error al cargar datos: no se encontraron datos';
+        }
         isLoading = false;
       });
     }
@@ -489,6 +494,7 @@ class _GestionarCitasScreenState extends State<GestionarCitasScreen> {
           SizedBox(height: 16),
           Text(
             'No tienes citas programadas',
+            textAlign: TextAlign.center,
             style: GoogleFonts.roboto(
               fontSize: 18,
               fontWeight: FontWeight.w500,
@@ -498,6 +504,7 @@ class _GestionarCitasScreenState extends State<GestionarCitasScreen> {
           SizedBox(height: 8),
           Text(
             'Solicita tu primera cita médica',
+            textAlign: TextAlign.center,
             style: GoogleFonts.roboto(
               fontSize: 14,
               color: Colors.grey[500],
@@ -508,21 +515,22 @@ class _GestionarCitasScreenState extends State<GestionarCitasScreen> {
     );
   }
 
-  void _mostrarDialogoNuevaCita() {
-    // TODO: Implementar diálogo para nueva cita
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Nueva Cita'),
-        content: Text('Funcionalidad en desarrollo...'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('OK'),
-          ),
-        ],
+  void _mostrarDialogoNuevaCita() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CrearCitaScreen(
+          pacienteId: widget.pacienteId,
+          grupoId: widget.grupoId,
+          grupoNombre: widget.grupoNombre,
+        ),
       ),
     );
+    
+    // Si se creó una cita, recargar los datos
+    if (result == true) {
+      await _cargarDatos();
+    }
   }
 
   void _cancelarCita(CitaMedica cita) {

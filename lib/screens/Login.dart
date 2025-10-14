@@ -231,9 +231,7 @@ class _LoginState extends State<Login> {
                                 // Debug: Imprimir todos los datos recibidos
                                 print("🔍 Datos recibidos del login: $result");
                                 print("🔍 Rol recibido: '${result['rol']}'");
-                                print(
-                                  "🔍 Puede acceder: ${result['puede_acceder']}",
-                                );
+                                print("🔍 Puede acceder: ${result['puede_acceder']}",);
 
                                 // Verificar que sea paciente (normalizar el texto y considerar variaciones)
                                 final rol =
@@ -245,11 +243,7 @@ class _LoginState extends State<Login> {
 
                                 // Considerar diferentes variaciones del rol paciente
                                 bool esPaciente =
-                                    rol == 'paciente' ||
-                                    rol == 'patient' ||
-                                    rol == 'pacientes' ||
-                                    rol == 'Paciente';
-
+                                    rol == 'paciente';
                                 if (esPaciente) {
                                   // Verificar que tenga acceso (puede_acceder = true)
                                   if (result['puede_acceder'] == true) {
