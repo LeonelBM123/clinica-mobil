@@ -6,13 +6,11 @@ import '../../data/services/CitaService.dart';
 import '../../data/services/MedicoService.dart';
 
 class CrearCitaScreen extends StatefulWidget {
-  final int pacienteId;
   final int grupoId;
   final String grupoNombre;
 
   const CrearCitaScreen({
     super.key,
-    required this.pacienteId,
     required this.grupoId,
     required this.grupoNombre,
   });
@@ -28,16 +26,15 @@ class _CrearCitaScreenState extends State<CrearCitaScreen> {
   
   List<Medico> _medicosDisponibles = [];
   List<BloqueHorario> _bloquesDisponibles = [];
-  List<String> _horasDisponibles = [];
   
   Medico? _medicoSeleccionado;
   BloqueHorario? _bloqueSeleccionado;
   DateTime? _fechaSeleccionada;
-  String? _horaSeleccionada;
+  TimeOfDay? _horaInicio;
+  TimeOfDay? _horaFin;
   
   bool _isLoadingMedicos = true;
   bool _isLoadingBloques = false;
-  bool _isLoadingHoras = false;
   bool _isCreating = false;
 
   @override
@@ -85,23 +82,33 @@ class _CrearCitaScreenState extends State<CrearCitaScreen> {
   }
 
   Future<void> _cargarBloquesHorario(Medico medico) async {
+    print("🔍 Cargando bloques horarios para médico: ${medico.id} - ${medico.nombreCompleto}");
     try {
       setState(() {
         _isLoadingBloques = true;
         _bloquesDisponibles = [];
         _bloqueSeleccionado = null;
         _fechaSeleccionada = null;
-        _horasDisponibles = [];
-        _horaSeleccionada = null;
+        _horaInicio = null;
+        _horaFin = null;
       });
       
-      final bloques = await CitaService.getBloquesHorarioMedico(medico.id);
+      // Obtener token para autenticación
+      final token = await storage.read(key: "token") ?? "";
+      print("🔍 Token: ${token.isNotEmpty ? 'Presente' : 'Ausente'}");
+      
+      final bloques = await CitaService.getBloquesHorarioMedico(medico.id, token);
+      print("🔍 Bloques horarios obtenidos: ${bloques.length}");
+      for (var bloque in bloques) {
+        print("🔍 Bloque: ${bloque.diaSemanaDisplay} - ${bloque.horarioDisplay}");
+      }
       
       setState(() {
         _bloquesDisponibles = bloques;
         _isLoadingBloques = false;
       });
     } catch (e) {
+      print("❌ Error al cargar bloques horarios: $e");
       setState(() {
         _isLoadingBloques = false;
       });
@@ -110,39 +117,6 @@ class _CrearCitaScreenState extends State<CrearCitaScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error al cargar horarios: $e'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _cargarHorasDisponibles() async {
-    if (_bloqueSeleccionado == null || _fechaSeleccionada == null) return;
-    
-    try {
-      setState(() {
-        _isLoadingHoras = true;
-        _horasDisponibles = [];
-        _horaSeleccionada = null;
-      });
-      
-      final fechaStr = _fechaSeleccionada!.toIso8601String().split('T')[0];
-      final horas = await CitaService.getHorasDisponibles(_bloqueSeleccionado!.id, fechaStr);
-      
-      setState(() {
-        _horasDisponibles = horas;
-        _isLoadingHoras = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoadingHoras = false;
-      });
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al cargar horas disponibles: $e'),
             backgroundColor: Colors.orange,
           ),
         );
@@ -172,11 +146,143 @@ class _CrearCitaScreenState extends State<CrearCitaScreen> {
     if (picked != null) {
       setState(() {
         _fechaSeleccionada = picked;
-        _horasDisponibles = [];
-        _horaSeleccionada = null;
+        _horaInicio = null;
+        _horaFin = null;
+      });
+    }
+  }
+
+  List<TimeOfDay> _generarHorasValidas() {
+    if (_bloqueSeleccionado == null) return [];
+    
+    final bloque = _bloqueSeleccionado!;
+    final List<TimeOfDay> horasValidas = [];
+    
+    // Convertir DateTime a TimeOfDay para facilitar el cálculo
+    final inicioBloque = TimeOfDay(
+      hour: bloque.horaInicio.hour, 
+      minute: bloque.horaInicio.minute
+    );
+    final finBloque = TimeOfDay(
+      hour: bloque.horaFin.hour, 
+      minute: bloque.horaFin.minute
+    );
+    
+    // Calcular intervalos válidos
+    int minutoActual = inicioBloque.hour * 60 + inicioBloque.minute;
+    final minutoFinal = finBloque.hour * 60 + finBloque.minute;
+    
+    while (minutoActual < minutoFinal) {
+      final hora = minutoActual ~/ 60;
+      final minuto = minutoActual % 60;
+      
+      // Verificar que no excedamos las 24 horas
+      if (hora < 24) {
+        horasValidas.add(TimeOfDay(hour: hora, minute: minuto));
+      }
+      
+      minutoActual += bloque.duracionCitaMinutos;
+    }
+    
+    return horasValidas;
+  }
+
+  Future<List<TimeOfDay>> _obtenerHorasDisponibles() async {
+    if (_bloqueSeleccionado == null || _fechaSeleccionada == null) {
+      return [];
+    }
+
+    try {
+      final todasLasHoras = _generarHorasValidas();
+      final fechaString = _fechaSeleccionada!.toIso8601String().split('T')[0];
+      final horasOcupadas = await CitaService.getHorasOcupadas(_bloqueSeleccionado!.id, fechaString);
+      
+      // Filtrar las horas ocupadas
+      final horasDisponibles = todasLasHoras.where((hora) {
+        final horaString = '${hora.hour.toString().padLeft(2, '0')}:${hora.minute.toString().padLeft(2, '0')}';
+        return !horasOcupadas.contains(horaString);
+      }).toList();
+      
+      return horasDisponibles;
+    } catch (e) {
+      print("❌ Error al obtener horas disponibles: $e");
+      return _generarHorasValidas(); // Fallback a todas las horas válidas
+    }
+  }
+
+  Future<void> _seleccionarHoraInicio() async {
+    // Mostrar loading mientras obtenemos las horas disponibles
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    try {
+      final horasDisponibles = await _obtenerHorasDisponibles();
+      
+      // Cerrar el loading
+      if (mounted) Navigator.of(context).pop();
+      
+      if (horasDisponibles.isEmpty) {
+        _mostrarError('No hay horas disponibles para la fecha seleccionada');
+        return;
+      }
+
+      final picked = await showDialog<TimeOfDay>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Seleccionar Hora de Inicio'),
+          content: Container(
+            width: double.maxFinite,
+            height: 300,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: horasDisponibles.length,
+              itemBuilder: (context, index) {
+                final hora = horasDisponibles[index];
+                return ListTile(
+                  title: Text(hora.format(context)),
+                  subtitle: Text('Duración: ${_bloqueSeleccionado!.duracionCitaMinutos} minutos'),
+                  onTap: () => Navigator.of(context).pop(hora),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
+            ),
+          ],
+        ),
+      );
+      
+      if (picked != null) {
+        setState(() {
+          _horaInicio = picked;
+          // Calcular automáticamente la hora de fin basada en la duración
+          final duracion = _bloqueSeleccionado!.duracionCitaMinutos;
+          final totalMinutos = picked.hour * 60 + picked.minute + duracion;
+          _horaFin = TimeOfDay(
+            hour: totalMinutos ~/ 60,
+            minute: totalMinutos % 60,
+          );
+        });
+      }
+    } catch (e) {
+      // Cerrar el loading si está abierto
+      if (mounted) Navigator.of(context).pop();
+      
+      // Limpiar horas si hay error
+      setState(() {
+        _horaInicio = null;
+        _horaFin = null;
       });
       
-      await _cargarHorasDisponibles();
+      _mostrarError('Error al cargar horas disponibles: $e');
     }
   }
 
@@ -198,33 +304,71 @@ class _CrearCitaScreenState extends State<CrearCitaScreen> {
       return;
     }
     
-    if (_horaSeleccionada == null) {
-      _mostrarError('Por favor selecciona una hora disponible');
+    if (_horaInicio == null) {
+      _mostrarError('Por favor selecciona la hora de inicio');
+      return;
+    }
+    
+    if (_horaFin == null) {
+      _mostrarError('Por favor selecciona la hora de fin');
       return;
     }
 
     setState(() => _isCreating = true);
 
     try {
-      // Calcular hora de fin
-      final parts = _horaSeleccionada!.split(':');
-      final h = int.parse(parts[0]);
-      final m = int.parse(parts[1]);
-      final horaInicioDt = DateTime(2000, 1, 1, h, m);
-      final dur = _bloqueSeleccionado!.duracionCitaMinutos;
-      final horaFinDt = horaInicioDt.add(Duration(minutes: dur));
-      final horaFinStr = '${horaFinDt.hour.toString().padLeft(2, '0')}:${horaFinDt.minute.toString().padLeft(2, '0')}';
-
-      final data = {
-        'fecha': _fechaSeleccionada!.toIso8601String().split('T')[0],
-        'hora_inicio': _horaSeleccionada,
+      // Validaciones adicionales justo antes de usar los valores
+      if (_horaInicio == null) {
+        throw Exception('Hora de inicio no seleccionada');
+      }
+      
+      if (_horaFin == null || _bloqueSeleccionado == null) {
+        // Recalcular hora de fin si es null
+        print("⚠️ [Frontend] Recalculando hora de fin...");
+        final duracion = _bloqueSeleccionado!.duracionCitaMinutos;
+        final totalMinutos = _horaInicio!.hour * 60 + _horaInicio!.minute + duracion;
+        _horaFin = TimeOfDay(
+          hour: totalMinutos ~/ 60,
+          minute: totalMinutos % 60,
+        );
+        
+        if (_horaFin == null) {
+          throw Exception('No se pudo calcular la hora de fin');
+        }
+      }
+      
+      // Obtener el ID del paciente del usuario actual
+      final pacienteId = await CitaService.getMiPacienteId();
+      
+      // Convertir TimeOfDay a string HH:MM con validación
+      final horaInicioStr = '${_horaInicio!.hour.toString().padLeft(2, '0')}:${_horaInicio!.minute.toString().padLeft(2, '0')}';
+      final horaFinStr = '${_horaFin!.hour.toString().padLeft(2, '0')}:${_horaFin!.minute.toString().padLeft(2, '0')}';
+      final notasText = _notasController.text.trim();
+      
+      // Formatear fecha de manera más robusta
+      final fechaStr = '${_fechaSeleccionada!.year.toString().padLeft(4, '0')}-${_fechaSeleccionada!.month.toString().padLeft(2, '0')}-${_fechaSeleccionada!.day.toString().padLeft(2, '0')}';
+      
+      print("🔍 [Frontend] Preparando datos para envío:");
+      print("🔍 [Frontend] - Fecha: $fechaStr");
+      print("🔍 [Frontend] - Hora inicio: $horaInicioStr");
+      print("🔍 [Frontend] - Hora fin: $horaFinStr");
+      print("🔍 [Frontend] - Notas: '$notasText'");
+      print("🔍 [Frontend] - Bloque horario ID: ${_bloqueSeleccionado!.id}");
+      
+      final data = <String, dynamic>{
+        'fecha': fechaStr,
+        'hora_inicio': horaInicioStr,
         'hora_fin': horaFinStr,
-        'notas': _notasController.text.trim(),
-        'paciente': widget.pacienteId,
+        'notas': notasText.isEmpty ? '' : notasText,  // Siempre string, nunca null
         'bloque_horario': _bloqueSeleccionado!.id,
+        // No enviamos paciente_id ya que el backend lo asigna automáticamente
       };
 
-      await CitaService.crearCita(data);
+      print("🔍 [Frontend] Enviando datos de cita: $data");
+      print("🔍 [Frontend] Paciente ID obtenido: $pacienteId");
+
+      final citaCreada = await CitaService.crearCita(data);
+      print("🔍 [Frontend] Cita creada exitosamente: ${citaCreada.id}");
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -235,12 +379,30 @@ class _CrearCitaScreenState extends State<CrearCitaScreen> {
         );
         Navigator.pop(context, true); // Retorna true para indicar que se creó
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print("❌ [Frontend] Error completo en _crearCita: $e");
+      print("❌ [Frontend] Stack trace: $stackTrace");
+      print("❌ [Frontend] Tipo de error: ${e.runtimeType}");
+      
       if (mounted) {
+        String errorMessage = 'Error al crear la cita';
+        
+        // Extraer mensaje específico del error
+        if (e.toString().contains('ya se encuentra ocupado')) {
+          errorMessage = 'El horario seleccionado ya está ocupado. Por favor selecciona otra hora.';
+        } else if (e.toString().contains('400')) {
+          errorMessage = 'Error en los datos enviados. Verifica la información.';
+        } else if (e.toString().contains('TypeError') || e.toString().contains('Null')) {
+          errorMessage = 'Error interno de la aplicación. Por favor intenta nuevamente.';
+        } else {
+          errorMessage = 'Error al crear la cita: $e';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al crear la cita: $e'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
@@ -500,8 +662,8 @@ class _CrearCitaScreenState extends State<CrearCitaScreen> {
                                     setState(() {
                                       _bloqueSeleccionado = bloque;
                                       _fechaSeleccionada = null;
-                                      _horasDisponibles = [];
-                                      _horaSeleccionada = null;
+                                      _horaInicio = null;
+                                      _horaFin = null;
                                     });
                                   },
                                 ),
@@ -545,9 +707,9 @@ class _CrearCitaScreenState extends State<CrearCitaScreen> {
 
                       SizedBox(height: 24),
 
-                      // Selector de hora
+                      // Selector de hora de inicio
                       Text(
-                        'Hora Disponible *',
+                        'Hora de Inicio *',
                         style: GoogleFonts.roboto(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
@@ -555,47 +717,60 @@ class _CrearCitaScreenState extends State<CrearCitaScreen> {
                         ),
                       ),
                       SizedBox(height: 8),
-                      Container(
+                      SizedBox(
                         width: double.infinity,
-                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey[300]!),
-                          borderRadius: BorderRadius.circular(12),
+                        child: OutlinedButton.icon(
+                          onPressed: _fechaSeleccionada == null || _bloqueSeleccionado == null ? null : _seleccionarHoraInicio,
+                          style: OutlinedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                            side: BorderSide(color: Colors.grey[300]!),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: Icon(Icons.access_time, size: 20),
+                          label: Text(
+                            _horaInicio == null
+                                ? (_fechaSeleccionada == null 
+                                    ? 'Primero selecciona una fecha'
+                                    : 'Seleccionar hora de inicio')
+                                : '${_horaInicio!.hour.toString().padLeft(2, '0')}:${_horaInicio!.minute.toString().padLeft(2, '0')}',
+                            style: GoogleFonts.roboto(),
+                          ),
                         ),
-                        child: _isLoadingHoras
-                            ? Padding(
-                                padding: EdgeInsets.all(16),
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF17635F)),
-                                  ),
-                                ),
-                              )
-                            : DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  value: _horaSeleccionada,
-                                  isExpanded: true,
-                                  hint: Text(_fechaSeleccionada == null 
-                                      ? 'Primero selecciona una fecha'
-                                      : (_horasDisponibles.isEmpty 
-                                          ? 'No hay horas disponibles'
-                                          : 'Selecciona una hora')),
-                                  items: _horasDisponibles.map((hora) {
-                                    return DropdownMenuItem(
-                                      value: hora,
-                                      child: Text(
-                                        hora,
-                                        style: GoogleFonts.roboto(),
-                                      ),
-                                    );
-                                  }).toList(),
-                                  onChanged: _horasDisponibles.isEmpty ? null : (hora) {
-                                    setState(() {
-                                      _horaSeleccionada = hora;
-                                    });
-                                  },
-                                ),
-                              ),
+                      ),
+
+                      SizedBox(height: 24),
+
+                      // Selector de hora de fin
+                      Text(
+                        'Hora de Fin *',
+                        style: GoogleFonts.roboto(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: null, // Deshabilitado porque se calcula automáticamente
+                          style: OutlinedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                            side: BorderSide(color: Colors.grey[300]!),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: Icon(Icons.access_time, size: 20),
+                          label: Text(
+                            _horaFin == null
+                                ? 'Hora de fin (se calcula automáticamente)'
+                                : '${_horaFin!.hour.toString().padLeft(2, '0')}:${_horaFin!.minute.toString().padLeft(2, '0')} (Calculado automáticamente)',
+                            style: GoogleFonts.roboto(),
+                          ),
+                        ),
                       ),
 
                       SizedBox(height: 24),

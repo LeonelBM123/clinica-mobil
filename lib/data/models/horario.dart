@@ -61,21 +61,41 @@ class BloqueHorario {
   });
 
   factory BloqueHorario.fromJson(Map<String, dynamic> json) {
-    return BloqueHorario(
-      id: json['id'],
-      diaSemana: json['dia_semana'],
-      horaInicio: DateTime.parse('2000-01-01 ${json['hora_inicio']}'),
-      horaFin: DateTime.parse('2000-01-01 ${json['hora_fin']}'),
-      estado: json['estado'],
-      duracionCitaMinutos: json['duracion_cita_minutos'],
-      maxCitasPorBloque: json['max_citas_por_bloque'],
-      fechaCreacion: DateTime.parse(json['fecha_creacion']),
-      fechaModificacion: DateTime.parse(json['fecha_modificacion']),
-      medicoId: json['medico'],
-      tipoAtencion: json['tipo_atencion'] != null 
-          ? TipoAtencion.fromJson(json['tipo_atencion'])
-          : null,
-    );
+    try {
+      return BloqueHorario(
+        id: json['id'] ?? 0,
+        diaSemana: json['dia_semana'] ?? '',
+        horaInicio: json['hora_inicio'] != null 
+            ? DateTime.parse('2000-01-01 ${json['hora_inicio']}')
+            : DateTime(2000, 1, 1, 8, 0), // Default 8:00 AM
+        horaFin: json['hora_fin'] != null 
+            ? DateTime.parse('2000-01-01 ${json['hora_fin']}')
+            : DateTime(2000, 1, 1, 17, 0), // Default 5:00 PM
+        estado: json['estado'] ?? true,
+        duracionCitaMinutos: json['duracion_cita_minutos'] ?? 30,
+        maxCitasPorBloque: json['max_citas_por_bloque'] ?? 1,
+        fechaCreacion: json['fecha_creacion'] != null 
+            ? DateTime.parse(json['fecha_creacion'])
+            : DateTime.now(),
+        fechaModificacion: json['fecha_modificacion'] != null 
+            ? DateTime.parse(json['fecha_modificacion'])
+            : DateTime.now(),
+        medicoId: json['medico'] ?? 0,
+        tipoAtencion: json['tipo_atencion'] != null 
+            ? (json['tipo_atencion'] is Map<String, dynamic> 
+                ? TipoAtencion.fromJson(json['tipo_atencion'])
+                : TipoAtencion(
+                    id: json['tipo_atencion'] as int,
+                    nombre: json['tipo_atencion_nombre'] ?? 'Tipo de Atención',
+                    estado: true,
+                  ))
+            : null,
+      );
+    } catch (e) {
+      print('❌ Error parsing BloqueHorario JSON: $e');
+      print('❌ JSON data: $json');
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {

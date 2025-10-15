@@ -270,7 +270,7 @@ class _GestionarCitasScreenState extends State<GestionarCitasScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        cita.nombreMedico ?? 'Médico no especificado',
+                        cita.medicoNombre ?? 'Médico no especificado',
                         style: GoogleFonts.roboto(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -520,7 +520,6 @@ class _GestionarCitasScreenState extends State<GestionarCitasScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => CrearCitaScreen(
-          pacienteId: widget.pacienteId,
           grupoId: widget.grupoId,
           grupoNombre: widget.grupoNombre,
         ),

@@ -23,20 +23,31 @@ class Medico {
   bool get estado => medico.estado;
   String? get rol => medico.rol;
 
-  factory Medico.fromJson(Map<String, dynamic> json) {
-    final ids = List<int>.from(json['especialidades']);
-    final nombres = List<String>.from(json['especialidades_nombres']);
-    final especialidades = <Especialidad>[];
-    for (var i = 0; i < ids.length && i < nombres.length; i++) {
-      especialidades.add(Especialidad(id: ids[i], nombre: nombres[i]));
-    }
-    return Medico(
-      medico: Usuario.fromJson(json['info_medico']),
-      numeroColegiado: json['numero_colegiado'],
-      especialidades: especialidades,
-    );
-    
+factory Medico.fromJson(Map<String, dynamic> json) {
+  final ids = List<int>.from(json['especialidades'] ?? []);
+  final nombres = List<String>.from(json['especialidades_nombres'] ?? []);
+
+  final especialidades = <Especialidad>[];
+  for (var i = 0; i < ids.length && i < nombres.length; i++) {
+    especialidades.add(Especialidad(id: ids[i], nombre: nombres[i]));
   }
+
+  return Medico(
+    medico: Usuario(
+      id: json['id'] ?? 0,
+      nombre: json['nombre'] ?? '',
+      correo: json['correo'] ?? '',
+      sexo: json['sexo'] ?? '',
+      fechaNacimiento: DateTime.tryParse(json['fecha_nacimiento'] ?? '') ?? DateTime.now(),
+      telefono: json['telefono'],
+      direccion: json['direccion'],
+      estado: json['estado'] ?? true,
+      rol: json['rol_nombre'] ?? '',
+    ),
+    numeroColegiado: json['numero_colegiado'] ?? '',
+    especialidades: especialidades,
+  );
+}
 
   Map<String, dynamic> toJson() {
     return {
