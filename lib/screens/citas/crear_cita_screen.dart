@@ -1,6 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
 import '../../data/models/models.dart';
 import '../../data/services/CitaService.dart';
 import '../../data/services/MedicoService.dart';
@@ -420,6 +424,152 @@ class _CrearCitaScreenState extends State<CrearCitaScreen> {
     );
   }
 
+Future<void> _makePayment() async {
+    try {
+      // 1️⃣ Llamar a tu backend para crear PaymentIntent
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:8000/api/citas_pagos/create-payment-intent/'), // Android emulator
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'amount': 1000, 'currency': 'usd'}), // $10.00
+      );
+
+      final jsonResponse = json.decode(response.body);
+      final clientSecret = jsonResponse['clientSecret'];
+
+      // 2️⃣ Inicializar el pago en Stripe
+      await Stripe.instance.initPaymentSheet(
+        paymentSheetParameters: SetupPaymentSheetParameters(
+          paymentIntentClientSecret: clientSecret,
+          merchantDisplayName: 'Mi Tienda Flutter',
+          style: ThemeMode.light,
+        ),
+      );
+
+      // 3️⃣ Mostrar la hoja de pago nativa
+      await Stripe.instance.presentPaymentSheet();
+
+      print('✅ Pago completado con éxito');
+    } catch (e) {
+      print('❌ Error en el pago: $e');
+    }
+  }
+
+  // Esta es la nueva función que tu botón debe llamar
+Future<void> _iniciarCreacionYPagoDeCita() async {
+  // =======================================================================
+  // PASO 1: VALIDACIÓN (Copiado directamente de tu función _crearCita)
+  // =======================================================================
+  if (!_formKey.currentState!.validate()) return;
+  
+  if (_medicoSeleccionado == null || _bloqueSeleccionado == null || _fechaSeleccionada == null || _horaInicio == null) {
+    _mostrarError('Por favor, completa todos los campos requeridos.');
+    return;
+  }
+
+  setState(() => _isCreating = true);
+
+  try {
+    // =======================================================================
+    // PASO 2: PREPARACIÓN DE DATOS (Copiado de tu función _crearCita)
+    // =======================================================================
+    
+    // Recalcular hora de fin para asegurar que no sea nula
+    final duracion = _bloqueSeleccionado!.duracionCitaMinutos;
+    final totalMinutos = _horaInicio!.hour * 60 + _horaInicio!.minute + duracion;
+    final horaFinCalculada = TimeOfDay(
+      hour: totalMinutos ~/ 60,
+      minute: totalMinutos % 60,
+    );
+    
+    // Formatear todos los datos para enviar al backend
+    final fechaStr = '${_fechaSeleccionada!.year.toString().padLeft(4, '0')}-${_fechaSeleccionada!.month.toString().padLeft(2, '0')}-${_fechaSeleccionada!.day.toString().padLeft(2, '0')}';
+    final horaInicioStr = '${_horaInicio!.hour.toString().padLeft(2, '0')}:${_horaInicio!.minute.toString().padLeft(2, '0')}';
+    final horaFinStr = '${horaFinCalculada.hour.toString().padLeft(2, '0')}:${horaFinCalculada.minute.toString().padLeft(2, '0')}';
+    final notasText = _notasController.text.trim();
+
+    // Este es el objeto que enviaremos al backend
+    final datosCita = <String, dynamic>{
+      'fecha': fechaStr,
+      'hora_inicio': horaInicioStr,
+      'hora_fin': horaFinStr,
+      'notas': notasText.isEmpty ? '' : notasText,
+      'bloque_horario': _bloqueSeleccionado!.id,
+      // El backend debe obtener el paciente desde el usuario autenticado
+    };
+    
+    print("🔍 [Frontend] Datos validados. Iniciando proceso de pago...");
+    print("🔍 [Frontend] Datos a enviar: $datosCita");
+
+    // =======================================================================
+    // PASO 3: INICIAR EL PAGO (Lógica de _makePayment, ahora con datos reales)
+    // =======================================================================
+    
+    // 1️⃣ Llamar a tu backend para crear la pre-reserva y el PaymentIntent
+    final response = await http.post(
+        Uri.parse('https://clinica-backend-b8m9.onrender.com/api/citas_pagos/create-payment-intent/'), // Android emulator
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'amount': 1000, 'currency': 'usd'}), // $10.00
+      ); // Asumiendo que tienes un CitaService
+    
+    final jsonResponse = json.decode(response.body);
+    
+    if (response.statusCode != 200) {
+      // Si el backend devuelve un error (ej: horario ya ocupado), lo mostramos
+      throw Exception(jsonResponse['error'] ?? 'Error del servidor al iniciar el pago.');
+    }
+    
+    final clientSecret = jsonResponse['clientSecret'];
+    final citaId = jsonResponse['citaId']; // El ID de la cita pre-reservada
+
+    // 2️⃣ Inicializar y mostrar la hoja de pago de Stripe
+    await Stripe.instance.initPaymentSheet(
+      paymentSheetParameters: SetupPaymentSheetParameters(
+        paymentIntentClientSecret: clientSecret,
+        merchantDisplayName: 'Tu Clínica', // Personaliza el nombre
+      ),
+    );
+    await Stripe.instance.presentPaymentSheet();
+
+    // 3️⃣ Si el pago fue exitoso, el flujo termina aquí.
+    // Opcional: Podrías llamar a un endpoint de "confirmación final" si es necesario.
+    
+    print("✅ [Frontend] Pago completado y cita confirmada (ID: $citaId)");
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cita creada y pagada exitosamente'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context, true); // Retorna true para indicar éxito
+    }
+
+  } catch (e, stackTrace) {
+    // =======================================================================
+    // PASO 4: MANEJO DE ERRORES (Combinando la lógica de ambas funciones)
+    // =======================================================================
+    print("❌ [Frontend] Error en el flujo de creación/pago: $e");
+    print("❌ [Frontend] Stack trace: $stackTrace");
+
+    if (mounted) {
+      String errorMessage = 'Ocurrió un error';
+      if (e is StripeException) {
+        // El error viene de Stripe (ej: tarjeta rechazada, usuario cancela)
+        errorMessage = 'Error en el pago: ${e.error.localizedMessage}';
+      } else {
+        // Error de validación del backend o de red
+        errorMessage = e.toString().replaceAll('Exception: ', '');
+      }
+      _mostrarError(errorMessage);
+    }
+  } finally {
+    setState(() => _isCreating = false);
+  }
+}
+
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -583,6 +733,7 @@ class _CrearCitaScreenState extends State<CrearCitaScreen> {
                                     return DropdownMenuItem(
                                       value: medico,
                                       child: Column(
+                                        mainAxisSize: MainAxisSize.min,
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
@@ -835,7 +986,8 @@ class _CrearCitaScreenState extends State<CrearCitaScreen> {
                     SizedBox(width: 16),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: _isCreating ? null : _crearCita,
+                        onPressed: _isCreating ? null : _iniciarCreacionYPagoDeCita,
+                        // onPressed: _isCreating ? null : _crearCita,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Color(0xFF17635F),
                           foregroundColor: Colors.white,

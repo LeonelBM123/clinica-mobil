@@ -1,3 +1,3 @@
 class AppConfig {
-  static const String apiUrl = "http://127.0.0.1:8000";
+  static const String apiUrl = "https://clinica-backend-b8m9.onrender.com";
 }

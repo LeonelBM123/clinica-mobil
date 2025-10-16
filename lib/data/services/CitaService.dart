@@ -8,11 +8,15 @@ class CitaService {
   static const String baseUrl = "${api.AppConfig.apiUrl}/api/citas_pagos/citas-medicas";
 
   /// Obtiene todas las citas de un paciente
-  static Future<List<CitaMedica>> getCitasPaciente(int pacienteId) async {
+  static Future<List<CitaMedica>> getCitasPaciente(int pacienteId, [String? token]) async {
+    final headers = {"Content-Type": "application/json"};
+    if (token != null && token.isNotEmpty) {
+      headers["Authorization"] = "Token $token";
+    }
     try {
       final response = await http.get(
-        Uri.parse("$baseUrl/paciente/$pacienteId/"),
-        headers: {"Content-Type": "application/json"},
+        Uri.parse("$baseUrl/usuario/$pacienteId/"),
+        headers: headers,
       );
       
       if (response.statusCode == 200) {

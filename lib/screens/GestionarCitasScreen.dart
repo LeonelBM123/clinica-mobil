@@ -42,13 +42,15 @@ class _GestionarCitasScreenState extends State<GestionarCitasScreen> {
         errorMessage = null;
       });
 
-      final citasData = await CitaService.getCitasPaciente(widget.pacienteId);
+      final citasData = await CitaService.getCitasPaciente(widget.pacienteId, await storage.read(key: "token") ?? "");
       final medicosData = await MedicoService.getMedicos(await storage.read(key: "token") ?? "");
 
       setState(() {
         citas = citasData;
         medicos = medicosData;
         isLoading = false;
+        print(citas);
+        print(medicos);
       });
     } catch (e) {
       setState(() {
