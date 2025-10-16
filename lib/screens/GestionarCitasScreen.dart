@@ -277,14 +277,7 @@ class _GestionarCitasScreenState extends State<GestionarCitasScreen> {
                           color: Colors.black87,
                         ),
                       ),
-                      Text(
-                        cita.especialidadMedico ?? 'Especialidad general',
-                        style: GoogleFonts.roboto(
-                          fontSize: 14,
-                          color: Color(0xFF17635F),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                      
                     ],
                   ),
                 ),
