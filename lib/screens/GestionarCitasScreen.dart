@@ -41,16 +41,17 @@ class _GestionarCitasScreenState extends State<GestionarCitasScreen> {
         isLoading = true;
         errorMessage = null;
       });
-
-      final citasData = await CitaService.getCitasPaciente(widget.pacienteId, await storage.read(key: "token") ?? "");
-      final medicosData = await MedicoService.getMedicos(await storage.read(key: "token") ?? "");
+  // Obtener el ID real del paciente asociado al usuario actual
+        final pacienteIdReal = await CitaService.getIdHistoriaDiagnosticoPaciente();
+        print("🔍 [GestionarCitasScreen] Cargando datos para paciente ID: $pacienteIdReal");
+        final citasData = await CitaService.getCitasPaciente(pacienteIdReal, await storage.read(key: "token") ?? "");
+        print("🔍 [GestionarCitasScreen] Citas cargadas: ${citasData.length}");
+        final medicosData = await MedicoService.getMedicos(await storage.read(key: "token") ?? "");
 
       setState(() {
         citas = citasData;
         medicos = medicosData;
         isLoading = false;
-        print(citas);
-        print(medicos);
       });
     } catch (e) {
       setState(() {
@@ -233,7 +234,7 @@ class _GestionarCitasScreenState extends State<GestionarCitasScreen> {
   }
 
   Widget _buildCitaCard(CitaMedica cita) {
-    return Container(
+  return Container(
       margin: EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,

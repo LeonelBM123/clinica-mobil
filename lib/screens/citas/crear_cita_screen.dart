@@ -343,29 +343,25 @@ class _CrearCitaScreenState extends State<CrearCitaScreen> {
       
       // Obtener el ID del paciente del usuario actual
       final pacienteId = await CitaService.getMiPacienteId();
-      
       // Convertir TimeOfDay a string HH:MM con validación
       final horaInicioStr = '${_horaInicio!.hour.toString().padLeft(2, '0')}:${_horaInicio!.minute.toString().padLeft(2, '0')}';
       final horaFinStr = '${_horaFin!.hour.toString().padLeft(2, '0')}:${_horaFin!.minute.toString().padLeft(2, '0')}';
       final notasText = _notasController.text.trim();
-      
       // Formatear fecha de manera más robusta
       final fechaStr = '${_fechaSeleccionada!.year.toString().padLeft(4, '0')}-${_fechaSeleccionada!.month.toString().padLeft(2, '0')}-${_fechaSeleccionada!.day.toString().padLeft(2, '0')}';
-      
       print("🔍 [Frontend] Preparando datos para envío:");
       print("🔍 [Frontend] - Fecha: $fechaStr");
       print("🔍 [Frontend] - Hora inicio: $horaInicioStr");
       print("🔍 [Frontend] - Hora fin: $horaFinStr");
       print("🔍 [Frontend] - Notas: '$notasText'");
       print("🔍 [Frontend] - Bloque horario ID: ${_bloqueSeleccionado!.id}");
-      
       final data = <String, dynamic>{
         'fecha': fechaStr,
         'hora_inicio': horaInicioStr,
         'hora_fin': horaFinStr,
         'notas': notasText.isEmpty ? '' : notasText,  // Siempre string, nunca null
         'bloque_horario': _bloqueSeleccionado!.id,
-        // No enviamos paciente_id ya que el backend lo asigna automáticamente
+        'paciente': pacienteId,
       };
 
       print("🔍 [Frontend] Enviando datos de cita: $data");
@@ -487,6 +483,8 @@ Future<void> _iniciarCreacionYPagoDeCita() async {
     final horaFinStr = '${horaFinCalculada.hour.toString().padLeft(2, '0')}:${horaFinCalculada.minute.toString().padLeft(2, '0')}';
     final notasText = _notasController.text.trim();
 
+    // Obtener el ID del paciente del usuario actual
+    final pacienteId = await CitaService.getMiPacienteId();
     // Este es el objeto que enviaremos al backend
     final datosCita = <String, dynamic>{
       'fecha': fechaStr,
@@ -494,7 +492,7 @@ Future<void> _iniciarCreacionYPagoDeCita() async {
       'hora_fin': horaFinStr,
       'notas': notasText.isEmpty ? '' : notasText,
       'bloque_horario': _bloqueSeleccionado!.id,
-      // El backend debe obtener el paciente desde el usuario autenticado
+      'paciente': pacienteId,
     };
     
     print("🔍 [Frontend] Datos validados. Iniciando proceso de pago...");
@@ -530,11 +528,10 @@ Future<void> _iniciarCreacionYPagoDeCita() async {
     );
     await Stripe.instance.presentPaymentSheet();
 
-    // 3️⃣ Si el pago fue exitoso, el flujo termina aquí.
-    // Opcional: Podrías llamar a un endpoint de "confirmación final" si es necesario.
-    
-    print("✅ [Frontend] Pago completado y cita confirmada (ID: $citaId)");
-    
+    // 3️⃣ Si el pago fue exitoso, ahora creamos la cita en el backend
+    final citaCreada = await CitaService.crearCita(datosCita);
+    print("✅ [Frontend] Pago completado y cita creada (ID: ${citaCreada.id})");
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
