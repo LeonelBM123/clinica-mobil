@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'snelle.dart';
+import 'ishihara.dart'; // <-- Importa el test de Ishihara
 
 class TestScreen extends StatelessWidget {
   final String grupoNombre;
@@ -121,7 +122,7 @@ class TestScreen extends StatelessWidget {
                 'Diagnostica: Daltonismo (Protanopia, Deuteranopia, Tritanopia)',
                 Icons.palette,
                 Color(0xFF4CAF50),
-                () => _iniciarTest(context, 'Ishihara'),
+                () => _iniciarIshihara(context),
               ),
 
               SizedBox(height: 16),
@@ -337,22 +338,28 @@ class TestScreen extends StatelessWidget {
     );
   }
 
+  void _iniciarIshihara(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => IshiharaTestScreen()),
+    );
+  }
+
   void _iniciarTest(BuildContext context, String testType) {
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text('Test $testType'),
-            content: Text(
-              'Esta funcionalidad estará disponible próximamente. Se redirigirá al test de $testType.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('Entendido'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: Text('Test $testType'),
+        content: Text(
+          'Esta funcionalidad estará disponible próximamente. Se redirigirá al test de $testType.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Entendido'),
           ),
+        ],
+      ),
     );
   }
 }
