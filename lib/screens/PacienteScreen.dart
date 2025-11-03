@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../data/services/MedicoService.dart';
 import '../data/models/models.dart';
 import 'GestionarCitasScreen.dart';
+import 'testo/TestScreen.dart'; // Asegúrate de importar la pantalla de Test
 
 class PacienteScreen extends StatefulWidget {
   final int usuarioId;
@@ -34,8 +35,6 @@ class _PacienteScreenState extends State<PacienteScreen> {
     _cargarMedicos();
   }
 
-
-
   Future<void> _cargarMedicos() async {
     try {
       setState(() {
@@ -43,7 +42,9 @@ class _PacienteScreenState extends State<PacienteScreen> {
         errorMessage = null;
       });
 
-      final medicosData = await MedicoService.getMedicos(await storage.read(key: "token") ?? "");
+      final medicosData = await MedicoService.getMedicos(
+        await storage.read(key: "token") ?? "",
+      );
       setState(() {
         medicos = medicosData;
         isLoading = false;
@@ -60,15 +61,199 @@ class _PacienteScreenState extends State<PacienteScreen> {
     // Limpiar datos almacenados
     await storage.delete(key: "token");
     await storage.delete(key: "user_data");
-    
+
     // Regresar al login
     Navigator.pushReplacementNamed(context, '/');
+  }
+
+  void _mostrarMedicos() {
+    setState(() {
+      _mostrandoMedicos = !_mostrandoMedicos;
+    });
+    Navigator.pop(context); // Cierra el Drawer si se llama desde ahí
+  }
+
+  void _mostrarHistorial() {
+    Navigator.pop(context); // Cierra el Drawer si se llama desde ahí
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text('Mi Historial'),
+            content: Text('Funcionalidad en desarrollo...'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('OK'),
+              ),
+            ],
+          ),
+    );
+  }
+
+  void _mostrarEmergencias() {
+    Navigator.pop(context); // Cierra el Drawer si se llama desde ahí
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text('Contactos de Emergencia'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('📞 Urgencias: 911'),
+                SizedBox(height: 8),
+                Text('🏥 Clínica ${widget.grupoNombre}'),
+                Text('📞 Central: (555) 123-4567'),
+                SizedBox(height: 8),
+                Text(
+                  '⚠️ En caso de emergencia oftalmológica, contacta inmediatamente.',
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Entendido'),
+              ),
+            ],
+          ),
+    );
+  }
+
+  void _irGestionarCitas() {
+    Navigator.pop(context); // Cierra el Drawer si se llama desde ahí
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => GestionarCitasScreen(
+              pacienteId: widget.usuarioId,
+              grupoId: widget.grupoId,
+              grupoNombre: widget.grupoNombre,
+            ),
+      ),
+    );
+  }
+
+  void _verTodosMedicos() {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text('Todos los Médicos'),
+            content: Container(
+              width: double.maxFinite,
+              height: 400,
+              child: ListView.builder(
+                itemCount: medicos.length,
+                itemBuilder: (context, index) {
+                  final medico = medicos[index];
+                  return ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Color(0xFF17635F),
+                      child: Icon(Icons.person, color: Colors.white),
+                    ),
+                    title: Text('Dr. ${medico.nombre}'),
+                    subtitle: Text(
+                      medico.especialidades.isNotEmpty
+                          ? medico.especialidades
+                              .map((e) => e.nombre)
+                              .join(', ')
+                          : 'Especialidad general',
+                    ),
+                  );
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cerrar'),
+              ),
+            ],
+          ),
+    );
+  }
+
+  void _irATest() {
+    Navigator.pop(context); // Cierra el Drawer
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TestScreen(grupoNombre: widget.grupoNombre),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(color: Color(0xFF17635F)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.account_circle, size: 48, color: Colors.white),
+                  SizedBox(height: 8),
+                  Text(
+                    'Paciente',
+                    style: GoogleFonts.roboto(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'Clínica ${widget.grupoNombre}',
+                    style: GoogleFonts.roboto(
+                      color: Colors.white70,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.event_note, color: Color(0xFF17635F)),
+              title: Text('Gestionar Citas'),
+              onTap: _irGestionarCitas,
+            ),
+            ListTile(
+              leading: Icon(Icons.medical_services, color: Color(0xFF1976D2)),
+              title: Text('Nuestros Médicos'),
+              onTap: _mostrarMedicos,
+            ),
+            ListTile(
+              leading: Icon(Icons.assignment, color: Color(0xFF9C27B0)),
+              title: Text('Mi Historial'),
+              onTap: _mostrarHistorial,
+            ),
+            ListTile(
+              leading: Icon(Icons.emergency, color: Color(0xFFE91E63)),
+              title: Text('Emergencias'),
+              onTap: _mostrarEmergencias,
+            ),
+            ListTile(
+              leading: Icon(Icons.local_hospital, color: Color(0xFF4CAF50)),
+              title: Text('Test'),
+              onTap: _irATest, // Agrega esta línea
+            ),
+            Divider(),
+            ListTile(
+              leading: Icon(Icons.logout, color: Colors.red),
+              title: Text('Cerrar Sesión'),
+              onTap: _cerrarSesion,
+            ),
+          ],
+        ),
+      ),
       appBar: AppBar(
         title: Text(
           'Dashboard Paciente',
@@ -93,10 +278,7 @@ class _PacienteScreenState extends State<PacienteScreen> {
         height: double.infinity,
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Colors.white,
-              Colors.grey[100]!,
-            ],
+            colors: [Colors.white, Colors.grey[100]!],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -127,19 +309,6 @@ class _PacienteScreenState extends State<PacienteScreen> {
                   ),
                   child: Column(
                     children: [
-                      Container(
-                        padding: EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Color(0xFF17635F).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(50),
-                        ),
-                        child: Icon(
-                          Icons.local_hospital,
-                          size: 48,
-                          color: Color(0xFF17635F),
-                        ),
-                      ),
-                      SizedBox(height: 20),
                       Text(
                         '¡Bienvenido!',
                         style: GoogleFonts.roboto(
@@ -159,46 +328,12 @@ class _PacienteScreenState extends State<PacienteScreen> {
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      SizedBox(height: 12),
-                      Text(
-                        'Conoce a nuestro equipo médico especializado',
-                        style: GoogleFonts.roboto(
-                          fontSize: 16,
-                          color: Colors.grey[600],
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
                     ],
                   ),
                 ),
-                
+
                 SizedBox(height: 24),
-                
-                // Sección de estadísticas rápidas
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildStatsCard(
-                        'Total Médicos',
-                        medicos.length.toString(),
-                        Icons.medical_services,
-                        Color(0xFF17635F),
-                      ),
-                    ),
-                    SizedBox(width: 16),
-                    Expanded(
-                      child: _buildStatsCard(
-                        'Especialidades',
-                        _getUniqueSpecialties().toString(),
-                        Icons.local_hospital,
-                        Color(0xFF1976D2),
-                      ),
-                    ),
-                  ],
-                ),
-                
-                SizedBox(height: 24),
-                
+
                 // Sección de funcionalidades principales
                 Text(
                   'Servicios Disponibles',
@@ -209,7 +344,7 @@ class _PacienteScreenState extends State<PacienteScreen> {
                   ),
                 ),
                 SizedBox(height: 16),
-                
+
                 // Cards de funcionalidades
                 Row(
                   children: [
@@ -219,16 +354,7 @@ class _PacienteScreenState extends State<PacienteScreen> {
                         'Solicitar, ver y cancelar citas médicas',
                         Icons.event_note,
                         Color(0xFF17635F),
-                        () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => GestionarCitasScreen(
-                              pacienteId: widget.usuarioId,
-                              grupoId: widget.grupoId,
-                              grupoNombre: widget.grupoNombre,
-                            ),
-                          ),
-                        ),
+                        _irGestionarCitas,
                       ),
                     ),
                     SizedBox(width: 16),
@@ -238,14 +364,14 @@ class _PacienteScreenState extends State<PacienteScreen> {
                         'Conoce a nuestro equipo médico',
                         Icons.medical_services,
                         Color(0xFF1976D2),
-                        () => _mostrarMedicos(),
+                        _mostrarMedicos,
                       ),
                     ),
                   ],
                 ),
-                
+
                 SizedBox(height: 16),
-                
+
                 Row(
                   children: [
                     Expanded(
@@ -254,7 +380,7 @@ class _PacienteScreenState extends State<PacienteScreen> {
                         'Ver historial médico y diagnósticos',
                         Icons.assignment,
                         Color(0xFF9C27B0),
-                        () => _mostrarHistorial(),
+                        _mostrarHistorial,
                       ),
                     ),
                     SizedBox(width: 16),
@@ -264,14 +390,14 @@ class _PacienteScreenState extends State<PacienteScreen> {
                         'Información de contacto de emergencia',
                         Icons.emergency,
                         Color(0xFFE91E63),
-                        () => _mostrarEmergencias(),
+                        _mostrarEmergencias,
                       ),
                     ),
                   ],
                 ),
-                
+
                 SizedBox(height: 24),
-                
+
                 // Sección de médicos (contraída por defecto)
                 if (_mostrandoMedicos) ...[
                   Text(
@@ -283,7 +409,7 @@ class _PacienteScreenState extends State<PacienteScreen> {
                     ),
                   ),
                   SizedBox(height: 16),
-                  
+
                   if (isLoading)
                     _buildLoadingCard()
                   else if (errorMessage != null)
@@ -291,13 +417,16 @@ class _PacienteScreenState extends State<PacienteScreen> {
                   else if (medicos.isEmpty)
                     _buildEmptyCard()
                   else
-                    ...medicos.take(3).map((medico) => _buildMedicoCard(medico)).toList(),
-                  
+                    ...medicos
+                        .take(3)
+                        .map((medico) => _buildMedicoCard(medico))
+                        .toList(),
+
                   if (medicos.length > 3) ...[
                     SizedBox(height: 16),
                     Center(
                       child: TextButton(
-                        onPressed: () => _verTodosMedicos(),
+                        onPressed: _verTodosMedicos,
                         child: Text(
                           'Ver todos los médicos (${medicos.length})',
                           style: GoogleFonts.roboto(
@@ -317,7 +446,12 @@ class _PacienteScreenState extends State<PacienteScreen> {
     );
   }
 
-  Widget _buildStatsCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatsCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -339,11 +473,7 @@ class _PacienteScreenState extends State<PacienteScreen> {
               color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(30),
             ),
-            child: Icon(
-              icon,
-              size: 24,
-              color: color,
-            ),
+            child: Icon(icon, size: 24, color: color),
           ),
           SizedBox(height: 12),
           Text(
@@ -357,10 +487,7 @@ class _PacienteScreenState extends State<PacienteScreen> {
           SizedBox(height: 4),
           Text(
             title,
-            style: GoogleFonts.roboto(
-              fontSize: 12,
-              color: Colors.grey[600],
-            ),
+            style: GoogleFonts.roboto(fontSize: 12, color: Colors.grey[600]),
             textAlign: TextAlign.center,
           ),
         ],
@@ -391,10 +518,7 @@ class _PacienteScreenState extends State<PacienteScreen> {
             SizedBox(height: 16),
             Text(
               'Cargando médicos...',
-              style: GoogleFonts.roboto(
-                fontSize: 16,
-                color: Colors.grey[600],
-              ),
+              style: GoogleFonts.roboto(fontSize: 16, color: Colors.grey[600]),
             ),
           ],
         ),
@@ -418,11 +542,7 @@ class _PacienteScreenState extends State<PacienteScreen> {
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 48,
-            color: Colors.red,
-          ),
+          Icon(Icons.error_outline, size: 48, color: Colors.red),
           SizedBox(height: 16),
           Text(
             'Error al cargar',
@@ -436,10 +556,7 @@ class _PacienteScreenState extends State<PacienteScreen> {
           Text(
             errorMessage!,
             textAlign: TextAlign.center,
-            style: GoogleFonts.roboto(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
+            style: GoogleFonts.roboto(fontSize: 14, color: Colors.grey[600]),
           ),
           SizedBox(height: 16),
           ElevatedButton.icon(
@@ -493,10 +610,7 @@ class _PacienteScreenState extends State<PacienteScreen> {
           SizedBox(height: 8),
           Text(
             'Próximamente se agregarán médicos a esta clínica',
-            style: GoogleFonts.roboto(
-              fontSize: 14,
-              color: Colors.grey[500],
-            ),
+            style: GoogleFonts.roboto(fontSize: 14, color: Colors.grey[500]),
             textAlign: TextAlign.center,
           ),
         ],
@@ -544,11 +658,7 @@ class _PacienteScreenState extends State<PacienteScreen> {
                 color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(50),
               ),
-              child: Icon(
-                icon,
-                size: 32,
-                color: color,
-              ),
+              child: Icon(icon, size: 32, color: color),
             ),
             SizedBox(height: 12),
             Text(
@@ -563,103 +673,13 @@ class _PacienteScreenState extends State<PacienteScreen> {
             SizedBox(height: 8),
             Text(
               description,
-              style: GoogleFonts.roboto(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+              style: GoogleFonts.roboto(fontSize: 12, color: Colors.grey[600]),
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _mostrarMedicos() {
-    setState(() {
-      _mostrandoMedicos = !_mostrandoMedicos;
-    });
-  }
-
-  void _verTodosMedicos() {
-    // Navegación a una pantalla dedicada con todos los médicos
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Todos los Médicos'),
-        content: Container(
-          width: double.maxFinite,
-          height: 400,
-          child: ListView.builder(
-            itemCount: medicos.length,
-            itemBuilder: (context, index) {
-              final medico = medicos[index];
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: Color(0xFF17635F),
-                  child: Icon(Icons.person, color: Colors.white),
-                ),
-                title: Text('Dr. ${medico.nombre}'),
-                subtitle: Text(
-                  medico.especialidades.isNotEmpty 
-                      ? medico.especialidades.map((e) => e.nombre).join(', ')
-                      : 'Especialidad general',
-                ),
-              );
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cerrar'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _mostrarHistorial() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Mi Historial'),
-        content: Text('Funcionalidad en desarrollo...'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _mostrarEmergencias() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Contactos de Emergencia'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('📞 Urgencias: 911'),
-            SizedBox(height: 8),
-            Text('🏥 Clínica ${widget.grupoNombre}'),
-            Text('📞 Central: (555) 123-4567'),
-            SizedBox(height: 8),
-            Text('⚠️ En caso de emergencia oftalmológica, contacta inmediatamente.'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Entendido'),
-          ),
-        ],
       ),
     );
   }
@@ -698,11 +718,7 @@ class _PacienteScreenState extends State<PacienteScreen> {
                     ),
                     borderRadius: BorderRadius.circular(35),
                   ),
-                  child: Icon(
-                    Icons.person,
-                    size: 35,
-                    color: Colors.white,
-                  ),
+                  child: Icon(Icons.person, size: 35, color: Colors.white),
                 ),
                 SizedBox(width: 16),
                 Expanded(
@@ -719,14 +735,19 @@ class _PacienteScreenState extends State<PacienteScreen> {
                       ),
                       SizedBox(height: 4),
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Color(0xFF17635F).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          medico.especialidades.isNotEmpty 
-                              ? medico.especialidades.map((e) => e.nombre).join(', ')
+                          medico.especialidades.isNotEmpty
+                              ? medico.especialidades
+                                  .map((e) => e.nombre)
+                                  .join(', ')
                               : 'Especialidad general',
                           style: GoogleFonts.roboto(
                             fontSize: 12,
@@ -740,9 +761,9 @@ class _PacienteScreenState extends State<PacienteScreen> {
                 ),
               ],
             ),
-            
+
             SizedBox(height: 20),
-            
+
             // Información de contacto
             Container(
               padding: EdgeInsets.all(16),
@@ -763,7 +784,8 @@ class _PacienteScreenState extends State<PacienteScreen> {
                     'Teléfono',
                     medico.telefono ?? 'No disponible',
                   ),
-                  if (medico.direccion != null && medico.direccion!.isNotEmpty) ...[
+                  if (medico.direccion != null &&
+                      medico.direccion!.isNotEmpty) ...[
                     SizedBox(height: 12),
                     _buildContactRow(
                       Icons.location_on_outlined,
@@ -781,7 +803,12 @@ class _PacienteScreenState extends State<PacienteScreen> {
     );
   }
 
-  Widget _buildContactRow(IconData icon, String label, String value, {bool isLast = false}) {
+  Widget _buildContactRow(
+    IconData icon,
+    String label,
+    String value, {
+    bool isLast = false,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -791,11 +818,7 @@ class _PacienteScreenState extends State<PacienteScreen> {
             color: Color(0xFF17635F).withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
-            icon,
-            size: 16,
-            color: Color(0xFF17635F),
-          ),
+          child: Icon(icon, size: 16, color: Color(0xFF17635F)),
         ),
         SizedBox(width: 12),
         Expanded(
