@@ -4,7 +4,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../data/services/MedicoService.dart';
 import '../data/models/models.dart';
 import 'GestionarCitasScreen.dart';
-import 'testo/TestScreen.dart'; // Asegúrate de importar la pantalla de Test
+import 'testo/TestScreen.dart';
+import 'ImageAnalysisScreen.dart';
 
 class PacienteScreen extends StatefulWidget {
   final int usuarioId;
@@ -391,6 +392,27 @@ class _PacienteScreenState extends State<PacienteScreen> {
                         Icons.emergency,
                         Color(0xFFE91E63),
                         _mostrarEmergencias,
+                      ),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 16),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildServiceCard(
+                        'Análisis de Imagen',
+                        'Análisis con IA de imágenes médicas',
+                        Icons.image_search,
+                        Color(0xFF4CAF50),
+                        () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ImageAnalysisScreen(),
+                          ),
+                        ),
                       ),
                     ),
                   ],
