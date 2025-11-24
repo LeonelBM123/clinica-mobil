@@ -14,6 +14,7 @@
     final String? medicoNombre;
     final int? medicoId;
     final int? grupo;
+    final String tipo;
 
     CitaMedica({
       this.id,
@@ -31,6 +32,7 @@
       this.medicoNombre,
       this.medicoId,
       this.grupo,
+      required this.tipo,
     });
 
     factory CitaMedica.fromJson(Map<String, dynamic> json) {
@@ -60,6 +62,7 @@
           medicoId = int.tryParse(json['medico']);
         }
       }
+      final tipo = (json['tipo'] as String?) ?? '';
       return CitaMedica(
         id: id,
         fecha: fecha,
@@ -76,6 +79,7 @@
         medicoNombre: medicoNombreLimpio,
         medicoId: medicoId,
         grupo: grupo,
+        tipo: tipo,
       );
     }
 

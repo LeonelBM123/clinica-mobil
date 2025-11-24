@@ -1,3 +1,4 @@
+
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -362,14 +363,16 @@ class _CrearCitaScreenState extends State<CrearCitaScreen> {
         'notas': notasText.isEmpty ? '' : notasText,  // Siempre string, nunca null
         'bloque_horario': _bloqueSeleccionado!.id,
         'paciente': pacienteId,
+        'tipo': 'CONSULTA', // O el valor que corresponda
       };
 
       print("🔍 [Frontend] Enviando datos de cita: $data");
       print("🔍 [Frontend] Paciente ID obtenido: $pacienteId");
 
       final citaCreada = await CitaService.crearCita(data);
-      print("🔍 [Frontend] Cita creada exitosamente: ${citaCreada.id}");
-      
+      print("🔍 [Frontend] Cita creada exitosamente: \\${citaCreada.id}");
+
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -493,6 +496,7 @@ Future<void> _iniciarCreacionYPagoDeCita() async {
       'notas': notasText.isEmpty ? '' : notasText,
       'bloque_horario': _bloqueSeleccionado!.id,
       'paciente': pacienteId,
+      'tipo': 'CONSULTA', // O el valor que corresponda
     };
     
     print("🔍 [Frontend] Datos validados. Iniciando proceso de pago...");
